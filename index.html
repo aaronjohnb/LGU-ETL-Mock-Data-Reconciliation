@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LGU Data Intake &amp; ETL Reconciliation | Portfolio Project</title>
+<meta name="description" content="Multi-source ETL and reconciliation of Philippine LGU HR data using Power Query and Excel, aligned to DBM NBC 588 and CSC MC 12 s. 2022.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#80EF80; --green-d:#2f8a3a; --green-l:#eefce9; --green-m:#c9f5c9;
+  --ink:#1c2a1f; --muted:#56655a; --line:#dfe9df; --bg:#fff; --soft:#f7fbf6;
+  --red:#fbd5d5; --yellow:#fff3c2;
+  --sans:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.65;font-size:17px}
+a{color:var(--green-d)}
+:focus-visible{outline:3px solid var(--green-d);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+nav{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;gap:6px;align-items:center;overflow-x:auto;padding-top:10px;padding-bottom:10px}
+nav strong{margin-right:auto;white-space:nowrap;font-size:15px}
+nav a{white-space:nowrap;text-decoration:none;color:var(--muted);font-size:14px;font-weight:500;padding:6px 12px;border-radius:999px}
+nav a:hover{background:var(--green-l);color:var(--ink)}
+header.hero{background:linear-gradient(180deg,var(--green-l),#fff);border-bottom:1px solid var(--line);padding:72px 0 56px}
+.hero h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.1;margin:0 0 18px;font-weight:800;letter-spacing:-.02em;max-width:18ch}
+.hero p.lead{font-size:1.15rem;color:var(--muted);max-width:68ch;margin:0 0 28px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px}
+.chip{background:#fff;border:1px solid var(--green);padding:4px 12px;border-radius:999px;font-size:13px;font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.stat{background:#fff;border:1px solid var(--line);border-left:5px solid var(--green);border-radius:10px;padding:14px 16px}
+.stat b{display:block;font-size:1.5rem;line-height:1.2}
+.stat span{font-size:.88rem;color:var(--muted)}
+section{padding:64px 0;border-bottom:1px solid var(--line)}
+section.alt{background:var(--soft)}
+h2{font-size:1.9rem;margin:0 0 8px;letter-spacing:-.01em}
+h3{font-size:1.15rem;margin:28px 0 8px}
+.sub{color:var(--muted);margin:0 0 28px;max-width:70ch}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+.card h3{margin-top:0}
+.card p{margin:0;color:var(--muted);font-size:.97rem}
+.card.accent{border-top:4px solid var(--green)}
+.callout{background:var(--green-l);border:1px solid var(--green);border-radius:12px;padding:18px 22px;margin-top:24px}
+code{font-family:var(--mono);font-size:.86em;background:var(--green-l);padding:1px 6px;border-radius:5px}
+pre{background:#f4f8f3;border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto;margin:10px 0 0;font-family:var(--mono);font-size:13.5px;line-height:1.6}
+pre code{background:none;padding:0}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;font-size:.92rem}
+.sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px;border:1px solid rgba(0,0,0,.15)}
+/* pipeline */
+.flow{display:grid;gap:0;max-width:760px}
+.step{display:grid;grid-template-columns:44px 1fr;gap:16px;position:relative;padding-bottom:22px}
+.step:not(:last-child)::before{content:"";position:absolute;left:21px;top:44px;bottom:0;width:2px;background:var(--green)}
+.dot{width:44px;height:44px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:800}
+.step h3{margin:6px 0 4px}
+.step ul{margin:0;padding-left:18px;color:var(--muted);font-size:.95rem}
+/* figures */
+figure{margin:0 0 36px}
+figure .frame{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 4px 18px rgba(47,138,58,.08)}
+figure .bar{display:flex;gap:6px;padding:9px 12px;background:var(--green-l);border-bottom:1px solid var(--line)}
+figure .bar i{width:10px;height:10px;border-radius:50%;background:var(--green)}
+figure img{display:block;width:100%;height:auto;cursor:zoom-in}
+figcaption{margin-top:10px;font-size:.93rem;color:var(--muted)}
+figcaption b{color:var(--ink)}
+.ph{display:none;padding:48px 20px;text-align:center;color:var(--muted);font-size:.9rem}
+.missing img{display:none}.missing .ph{display:block}
+dialog{border:none;padding:0;background:transparent;max-width:96vw}
+dialog::backdrop{background:rgba(20,40,24,.7)}
+dialog img{max-width:96vw;max-height:92vh;border-radius:8px;background:#fff}
+.refs a{font-weight:700}
+footer{padding:36px 0;color:var(--muted);font-size:.9rem;text-align:center}
+@media(max-width:600px){body{font-size:16px}section{padding:44px 0}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<nav aria-label="Sections"><div class="wrap">
+  <strong>LGU ETL Reconciliation</strong>
+  <a href="#overview">Overview</a><a href="#objectives">Objectives</a><a href="#decisions">Design decisions</a><a href="#schema">Schema</a><a href="#workflow">Workflow</a><a href="#code">Code</a><a href="#evidence">Evidence</a>
+</div></nav>
+
+<header class="hero" id="overview"><div class="wrap">
+  <h1>Mock LGU Data Intake and ETL Reconciliation</h1>
+  <p class="lead">Public sector HR data often lives in disconnected CSV files, spreadsheets and internal logs. That fragmentation leads to payroll discrepancies, unmapped job titles and data lost during cleanup. This project builds an auditable intake pipeline for a Philippine Local Government Unit that fixes all three without deleting a single raw record.</p>
+  <div class="chips">
+    <span class="chip">Power Query</span><span class="chip">Excel XLOOKUP</span><span class="chip">M code</span><span class="chip">Conditional formatting</span><span class="chip">DBM NBC 588</span><span class="chip">CSC MC 12 s. 2022</span>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>3 Sources</b><span>CSV and XLSX files with different column layouts</span></div>
+    <div class="stat"><b>2-tier lookup</b><span>Alias dictionary first, official titles second</span></div>
+    <div class="stat"><b>0 Deletions</b><span>Duplicates and unmapped rows kept for review</span></div>
+    <div class="stat"><b>Annual Salary</b><span>Hourly and monthly pay normalized to one field</span></div>
+  </div>
+  <div class="callout"><b>Core result:</b> a presentation-ready reconciliation master sheet with deterministic two-tier <code>XLOOKUP</code> fallbacks, automated <code>REQUIRES_AUDIT</code> flags, whole-row duplicate tracking and standardized annual salaries.</div>
+</div></header>
+
+<section id="objectives"><div class="wrap">
+  <h2>Project objectives</h2>
+  <p class="sub">Four goals shaped every decision in the pipeline.</p>
+  <div class="grid">
+    <div class="card accent"><h3>Unified ingestion</h3><p>Combine CSV and Excel files with non-uniform columns into one staging environment while keeping raw lineage.</p></div>
+    <div class="card accent"><h3>Regulatory alignment</h3><p>Map local payroll and job titles to DBM salary grades and CSC parenthetical classifications.</p></div>
+    <div class="card accent"><h3>Defensive data governance</h3><p>No destructive deletion. Cross-system duplicates and unmapped records stay visible for human compliance review.</p></div>
+    <div class="card accent"><h3>Auditable presentation</h3><p>Turn the calculation engine into a clean business report with conditional formatting and dynamic record notes.</p></div>
+  </div>
+</div></section>
+
+<section id="decisions" class="alt"><div class="wrap">
+  <h2>Results and design decisions</h2>
+  <p class="sub">The reasoning behind each technical choice.</p>
+  <div class="grid">
+    <div class="card"><h3>Why duplicates are preserved</h3><p>Overlapping records across employee tables, contractor files and vendor logs keep distinct identifiers (<code>EMP-</code>, <code>CONT-</code>, <code>VLOG-</code>). A <code>COUNTIF</code> on names drives whole-row highlighting and a <code>CROSS_SYSTEM_DUPLICATE</code> note, so auditors can trace multi-system payouts without losing raw intake lineage.</p></div>
+    <div class="card"><h3>Raw and standard titles stay separate</h3><p>Raw titles such as <code>HR Officer 1</code>, <code>Acct Clerk 3</code> and <code>Electrician 1</code> remain in the input column. A separate <code>Standardized_Job_Title</code> column holds the official parenthetical title, such as Human Resource Management Officer I, resolved through the mapped code.</p></div>
+    <div class="card"><h3>Normalized annual salary</h3><p>Source files reported pay by the hour, month or year. Custom Power Query logic converts everything to <code>Normalized_Annual_Salary</code> so salary grade matching is consistent.</p></div>
+    <div class="card"><h3>Restrained color coding</h3><p>Soft yellow marks the ID with cross-system duplicates. Soft red marks single cells with unmapped roles. Reviewers see what needs attention without a wall of color.</p></div>
+  </div>
+  <div class="legend">
+    <span><i class="sw" style="background:var(--yellow)"></i>Cross-system duplicate (cell)</span>
+    <span><i class="sw" style="background:var(--red)"></i>REQUIRES_AUDIT (cell)</span>
+    <span><i class="sw" style="background:var(--green)"></i>Clean, mapped record</span>
+  </div>
+</div></section>
+
+<section id="schema"><div class="wrap">
+  <h2>Master schema and regulatory references</h2>
+  <p class="sub">Job classifications and salary steps follow official national standards.</p>
+  <div class="grid refs" style="margin-bottom:32px">
+    <div class="card accent"><h3>Civil Service Commission</h3><p>Generic and parenthetical titles of positions in LGUs.<br><a href="https://www.csc.gov.ph/phocadownload/userupload/irmo/mc/2022/MC12/2200373-Annex-B-1-Generic-and-Parenthetical-Titles-of-Positions-in-LGUs-9-7-2022.pdf" target="_blank" rel="noopener">CSC Memorandum Circular No. 12, s. 2022</a></p></div>
+    <div class="card accent"><h3>Department of Budget and Management</h3><p>National salary grades and compensation steps.<br><a href="https://www.dbm.gov.ph/wp-content/uploads/Issuances/2022/National-Budget-Circular/NATIONAL-BUDGET-CIRCULAR-NO-588.pdf" target="_blank" rel="noopener">DBM National Budget Circular No. 588</a></p></div>
+  </div>
+  <figure>
+    <div class="frame"><div class="bar"><i></i><i></i><i></i></div>
+      <img src="images/Initial_Master_Schema.png" alt="Master schema workbook with Position_Classifications, Salary_Table_2022 and Title_Alias_Dictionary sheets" loading="lazy">
+      <div class="ph">Add images/Initial_Master_Schema.png</div></div>
+    <figcaption><b>Initial master schema.</b> Position classifications, the DBM 2022 salary table and the title alias dictionary.</figcaption>
+  </figure>
+</div></section>
+
+<section id="workflow" class="alt"><div class="wrap">
+  <h2>Methodology and technical workflow</h2>
+  <p class="sub">The data lifecycle from raw ingestion to the final report.</p>
+  <div class="flow">
+    <div class="step"><div class="dot">1</div><div><h3>Multi-format raw sources</h3><ul><li>CSV and XLSX files from payroll, legacy contractors and an external vendor log</li></ul></div></div>
+    <div class="step"><div class="dot">2</div><div><h3>Power Query ETL ingestion</h3><ul><li>Custom column schema unification</li><li>Dynamic header promotion and M code cleanup</li></ul></div></div>
+    <div class="step"><div class="dot">3</div><div><h3>Staging append and normalization</h3><ul><li>Hourly and monthly pay converted to annual salary</li><li>Raw lineage preserved with EMP, CONT and VLOG IDs</li></ul></div></div>
+    <div class="step"><div class="dot">4</div><div><h3>Deterministic two-tier XLOOKUP</h3><ul><li>Tier 1: title alias dictionary for legacy variants and shorthand</li><li>Tier 2: position classifications table for official titles</li><li>Fallback: <code>REQUIRES_AUDIT</code> for unmapped or ambiguous roles</li></ul></div></div>
+    <div class="step"><div class="dot">5</div><div><h3>Master reconciliation view</h3><ul><li>Salary grade lookup through the mapped mapped code</li><li>Whole-row duplicate tracking and dynamic record notes</li><li>Soft-alert conditional formatting for presentation</li></ul></div></div>
+  </div>
+</div></section>
+
+<section id="code"><div class="wrap">
+  <h2>Key technical artifacts</h2>
+  <p class="sub">The snippets that do the heavy lifting.</p>
+
+  <h3>A. Power Query: handling disparate multi-format columns</h3>
+  <p class="sub" style="margin-bottom:0">Header promotion that avoids structural errors when file layouts differ.</p>
+<pre><code>Table.PromoteHeaders(Csv.Document([Content], [Delimiter=",", QuoteStyle = QuoteStyle.Csv]))</code></pre>
+
+  <h3>B. Power Query: salary normalization custom column</h3>
+  <p class="sub" style="margin-bottom:0">Hourly wages and monthly pay become one annual metric (2,080 hours per year, 12 months per year).</p>
+<pre><code>if [ParsedCSV.Hourly_Rate] &lt;&gt; null then [ParsedCSV.Hourly_Rate] * 2080
+else if [ParsedCSV.Pay_Type] = "Monthly" then [ParsedCSV.Pay_Rate] * 12
+else if [ParsedCSV.Pay_Type] = "Hourly" then [ParsedCSV.Pay_Rate] * 2080
+else 0</code></pre>
+
+  <h3>C. Power Query: M code column cleaning</h3>
+  <p class="sub" style="margin-bottom:0">Strips the expansion prefix from merged column names.</p>
+<pre><code>#"Added M-CODE" = Table.TransformColumnNames(
+    #"Added Conditional Column3",
+    each if Text.StartsWith(_, "PromotedExcel.") then Text.AfterDelimiter(_, "PromotedExcel.") else _
+)</code></pre>
+
+  <h3>D. Excel: two-tier deterministic XLOOKUP chain</h3>
+  <p class="sub" style="margin-bottom:0">Fuzzy matching is unreliable for numeric and acronym variants such as "1" vs "I" or "HR Dept" vs "Human Resource Management". This chain checks the alias dictionary, falls back to the master classification table, then flags the row for human review.</p>
+<pre><code>=XLOOKUP(
+    [@[Job_Title]],
+    Title_Alias_Dictionary!B2:B10,
+    Title_Alias_Dictionary!A2:A10,
+    XLOOKUP(
+        [@[Job_Title]],
+        Position_Classifications!C2:C10,
+        Position_Classifications!F2:F10,
+        "REQUIRES_AUDIT",
+        0
+    ),
+    0
+)</code></pre>
+
+  <h3>E. Salary grade resolution formula</h3>
+  <p class="sub" style="margin-bottom:0">Once the mapped code is resolved, the official grade comes from the DBM schedule.</p>
+<pre><code>=XLOOKUP([@[Mapped_Code]],Table5[Master_Code],Table5[Salary_Grade],"N/A", 0)</code></pre>
+</div></section>
+
+<section id="evidence" class="alt"><div class="wrap">
+  <h2>Supporting visual evidence</h2>
+  <p class="sub">Select any screenshot to enlarge it.</p>
+
+  <figure>
+    <div class="frame"><div class="bar"><i></i><i></i><i></i></div>
+      <img src="images/Mock_data_directory.png" alt="Folder containing the three mock source files" loading="lazy">
+      <div class="ph">Add images/Mock_data_directory.png</div></div>
+    <figcaption><b>Raw source folder.</b> The mock payroll export, legacy contractor file and external vendor log.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="frame"><div class="bar"><i></i><i></i><i></i></div>
+      <img src="images/Mock_data_content.png" alt="Three source workbooks with EMP, CONT and VLOG identifiers" loading="lazy">
+      <div class="ph">Add images/Mock_data_content.png</div></div>
+    <figcaption><b>Raw staging data.</b> The three sources use different headers and pay frequencies (<code>EMP-</code>, <code>CONT-</code>, <code>VLOG-</code>).</figcaption>
+  </figure>
+
+  <figure>
+    <div class="frame"><div class="bar"><i></i><i></i><i></i></div>
+      <img src="images/CSV_query.png" alt="Power Query Editor for the CSV Sources query with applied steps" loading="lazy">
+      <div class="ph">Add images/CSV_query.png</div></div>
+    <figcaption><b>Power Query: CSV sources.</b> Parsed columns, conditional columns and renamed fields in the applied steps.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="frame"><div class="bar"><i></i><i></i><i></i></div>
+      <img src="images/Excel_Query.png" alt="Power Query Editor for the Excel Sources query with applied steps" loading="lazy">
+      <div class="ph">Add images/Excel_Query.png</div></div>
+    <figcaption><b>Power Query: Excel sources.</b> Header promotion, M code column cleanup and proper-case names.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="frame"><div class="bar"><i></i><i></i><i></i></div>
+      <img src="images/Final_Normalized_Data.png" alt="Final_Reconciliation query combining all sources into 21 rows" loading="lazy">
+      <div class="ph">Add images/Final_Normalized_Data.png</div></div>
+    <figcaption><b>Combined and normalized data.</b> All sources unified with normalized annual salaries and reordered columns.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="frame"><div class="bar"><i></i><i></i><i></i></div>
+      <img src="images/Final_Conditional_Formatting_State.png" alt="Final reconciliation master sheet with duplicate row highlights and REQUIRES_AUDIT flags" loading="lazy">
+      <div class="ph">Add images/Final_Conditional_Formatting_State.png</div></div>
+    <figcaption><b>Final master reconciliation view.</b> Standardized titles, salary grades, mapped codes, whole-row duplicate highlights and audit notes.</figcaption>
+  </figure>
+</div></section>
+
+<footer><div class="wrap">Mock LGU Data Intake and ETL Reconciliation. Built with mock data for portfolio purposes.</div></footer>
+
+<dialog id="zoom"><img alt=""></dialog>
+<script>
+document.querySelectorAll('figure img').forEach(function(img){
+  img.addEventListener('error',function(){img.closest('.frame').classList.add('missing')});
+  img.addEventListener('click',function(){
+    var d=document.getElementById('zoom');d.querySelector('img').src=img.src;d.querySelector('img').alt=img.alt;d.showModal();
+  });
+});
+document.getElementById('zoom').addEventListener('click',function(e){e.currentTarget.close()});
+</script>
+</body>
+</html>
